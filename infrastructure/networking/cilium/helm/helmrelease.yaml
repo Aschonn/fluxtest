@@ -1,0 +1,128 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cilium
+  namespace: kube-system
+spec:
+  releaseName: cilium
+  interval: 5m
+
+  chart:
+    spec:
+      chart: cilium
+      sourceRef:
+        kind: HelmRepository
+        name: cilium
+        namespace: flux-system
+      version: "1.18.6"
+
+  # 🔑 REQUIRED so CRDs are installed/updated by Helm
+  install:
+    crds: CreateReplace
+
+  upgrade:
+    crds: CreateReplace
+
+  values:
+    # -------------------------------------------------
+    # Cluster Name
+    # -------------------------------------------------
+
+    cluster:
+      name: flux-cluster
+      id: 1
+
+    # -------------------------------------------------
+    # Core
+    # -------------------------------------------------
+    kubeProxyReplacement: true
+
+    k8sServiceHost: 192.168.0.82
+    k8sServicePort: 6443
+
+    # -------------------------------------------------
+    # Networking
+    # -------------------------------------------------
+    routingMode: native
+    autoDirectNodeRoutes: true
+
+    ipv4NativeRoutingCIDR: 10.42.0.0/16
+
+    ipv4:
+      enabled: true
+    ipv6:
+      enabled: false
+
+    enableIPv4Masquerade: true
+    enableBPFMasquerade: true
+
+    # -------------------------------------------------
+    # IPAM
+    # -------------------------------------------------
+    ipam:
+      mode: kubernetes
+
+    # -------------------------------------------------
+    # CRITICAL: automatic rollouts
+    # -------------------------------------------------
+    rollOutCiliumPods: true
+
+    operator:
+      replicas: 1
+      rollOutPods: true
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          memory: 256Mi
+
+    # -------------------------------------------------
+    # DNS / Gateway API
+    # -------------------------------------------------
+    dnsProxy:
+      enabled: true
+
+    gatewayAPI:
+      enabled: true
+
+    envoy:
+      enabled: true
+
+    # -------------------------------------------------
+    # L2 / LoadBalancer
+    # -------------------------------------------------
+    l2announcements:
+      enabled: true
+
+    externalIPs:
+      enabled: true
+
+    loadBalancer:
+      algorithm: maglev
+
+    nodePort:
+      enabled: true
+
+    # -------------------------------------------------
+    # Hubble
+    # -------------------------------------------------
+    hubble:
+      enabled: true
+      relay:
+        enabled: true
+      ui:
+        enabled: true
+
+    # -------------------------------------------------
+    # Resources
+    # -------------------------------------------------
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+
+    debug:
+      enabled: false
